@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking App</title>
+  </head>
+  <body>
+    <div id="root">
+      <form onsubmit="saveToLocalStorage(event)">
+        <h1>Booking Appointment App</h1>
+        <label for="name">Name :</label>
+        <input type="text" id="name" />
+        <label for="email">Email :</label>
+        <input type="email" id="email" />
+        <label for="phone">Phone :</label>
+        <input type="tel" id="phone" />
+        <button id="btn">Submit</button>
+      </form>
+
+      <ul id="list"></ul>
+      <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"
+        integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+      ></script>
+
+      <script>
+        function saveToLocalStorage(e) {
+          e.preventDefault();
+          let name = document.getElementById("name").value;
+          let email = document.getElementById("email").value;
+          let phone = document.getElementById("phone").value;
+
+          if (email == "") {
+            return;
+          }
+
+          const obj = {
+            name,
+            email,
+            phone,
+          };
+          document.getElementById("name").value = "";
+          document.getElementById("email").value = "";
+          document.getElementById("phone").value = "";
+
+          //post on crudcrud server
+          axios
+            .post("http://localhost:8000/api/users", obj)
+            .then((value) => showNewUserOnScreen(obj))
+            .catch((error) => console.log(error));
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+          console.log("DOM fully loaded and parsed");
+          loadDataFromTheServer();
+        });
+
+        function loadDataFromTheServer() {
+          let users;
+
+          axios
+            .get("http://localhost:8000/api/users")
+            .then(function (value) {
+              users = value.data;
+              console.log(users);
+
+              for (let i = 0; i < users.length; i++) {
+                showNewUserOnScreen(users[i]);
+              }
+            })
+            .catch((error) => console.log(error));
+        }
+
+        function showNewUserOnScreen(obj) {
+          console.log(obj);
+          let list = document.getElementById("list");
+          let li = document.createElement("li");
+
+          let userInfo = document.createElement("span");
+          userInfo.textContent = `${obj.name} - ${obj.email} - ${obj.phone}`;
+
+          let deleteButton = document.createElement("button");
+          deleteButton.className = "deleteButton";
+          deleteButton.textContent = "Delete";
+          let editButton = document.createElement("button");
+          editButton.className = "editButton";
+          editButton.textContent = "Edit";
+          deleteButton.addEventListener("click", function () {
+            deleteFromLocalStorage(obj.email);
+          });
+
+          editButton.addEventListener("click", function () {
+            document.getElementById("name").value = obj.name;
+            document.getElementById("email").value = obj.email;
+            document.getElementById("phone").value = obj.phone;
+          });
+
+          li.appendChild(userInfo);
+          li.appendChild(deleteButton);
+          li.appendChild(editButton);
+
+          list.appendChild(li);
+        }
+
+        function deleteFromLocalStorage(email) {
+          axios
+            .delete(`http://localhost:8000/api/users/${email}`)
+            .then((value) => {
+              console.log(value);
+              li.remove();
+            })
+            .catch((e) => console.log(e));
+        }
+      </script>
+    </div>
+  </body>
+</html>
