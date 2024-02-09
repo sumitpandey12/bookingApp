@@ -3,6 +3,10 @@ const users = require("./MOCK_DATA.json");
 const fs = require("fs");
 const { log } = require("console");
 
+const sequelize = require("./utils/database");
+
+const UserController = require("./controllers/user");
+
 var app = express();
 
 const PORT = 8000;
@@ -14,76 +18,61 @@ app.use(express.json());
 
 //Routes
 
-app.get("/api/users", function (req, res) {
-  return res.json(users);
-});
+app.get("/api/users", UserController.getUsers);
 
-app.post("/api/users", function (req, res) {
-  const user = req.body;
+app.post("/api/users", UserController.postUser);
 
-  if (user.email == "") {
-    return res.json("message: Email are not there");
-  }
+app.patch("/api/users/:email", UserController.patchUser);
 
-  const existingUserIndex = users.findIndex((u) => u.email === user.email);
+app.delete("/api/users/:email", UserController.deleteUser);
 
-  if (existingUserIndex !== -1) {
-    users.splice(existingUserIndex, 1, user);
-  } else {
-    users.push(user);
-  }
+// app.patch("/api/users/:email", (req, res) => {
+//   const email = req.params.email;
+//   const updatedUser = req.body;
 
-  fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-    return res.json(user);
-  });
-});
+//   const existingUser = users.find((user) => user.email === email);
+//   console.log(existingUser);
+//   if (!existingUser) {
+//     return res.status(404).json({ error: "User not found" });
+//   }
 
-app.patch("/api/users/:email", (req, res) => {
-  const email = req.params.email;
-  const updatedUser = req.body;
+//   Object.assign(existingUser, updatedUser);
 
-  const existingUser = users.find((user) => user.email === email);
-  console.log(existingUser);
-  if (!existingUser) {
-    return res.status(404).json({ error: "User not found" });
-  }
+//   fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
+//     if (err) {
+//       console.error(err);
+//       return res.status(500).json({ error: "Internal Server Error" });
+//     }
+//     return res.json(existingUser);
+//   });
+// });
 
-  Object.assign(existingUser, updatedUser);
+// app.delete("/api/users/:email", (req, res) => {
+//   const email = req.params.email;
 
-  fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-    return res.json(existingUser);
-  });
-});
+//   const index = users.findIndex((user) => user.email === email);
 
-app.delete("/api/users/:email", (req, res) => {
-  const email = req.params.email;
+//   if (index === -1) {
+//     return res.status(404).json({ error: "User not found" });
+//   }
 
-  const index = users.findIndex((user) => user.email === email);
+//   // Remove the user from the array
+//   const deletedUser = users.splice(index, 1)[0];
 
-  if (index === -1) {
-    return res.status(404).json({ error: "User not found" });
-  }
+//   fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
+//     if (err) {
+//       console.error(err);
+//       return res.status(500).json({ error: "Internal Server Error" });
+//     }
+//     return res.json(deletedUser);
+//   });
+// });
 
-  // Remove the user from the array
-  const deletedUser = users.splice(index, 1)[0];
-
-  fs.writeFile("./MOCK_DATA.json", JSON.stringify(users), (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-    return res.json(deletedUser);
-  });
-});
-
-app.listen(PORT, function () {
-  console.log("Started application on port %d", PORT);
-});
+sequelize
+  .sync()
+  .then((result) => {
+    app.listen(PORT, function () {
+      console.log("Started application on port %d", PORT);
+    });
+  })
+  .catch((errr) => console.log(errr));

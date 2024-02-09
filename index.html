@@ -64,8 +64,8 @@
           axios
             .get("http://localhost:8000/api/users")
             .then(function (value) {
-              users = value.data;
-              console.log(users);
+              users = value.data.users;
+              console.log(users.users);
 
               for (let i = 0; i < users.length; i++) {
                 showNewUserOnScreen(users[i]);
@@ -96,6 +96,8 @@
             document.getElementById("name").value = obj.name;
             document.getElementById("email").value = obj.email;
             document.getElementById("phone").value = obj.phone;
+
+            deleteFromLocalStorage(obj.email);
           });
 
           li.appendChild(userInfo);
